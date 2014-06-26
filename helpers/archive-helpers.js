@@ -2,6 +2,16 @@ var fs = require('fs');
 var path = require('path');
 var _ = require('underscore');
 var request = require('request');
+var mysql = require('mysql');
+
+var connection = mysql.createConnection({
+  host: 'localhost',
+  user: 'root',
+  database: 'test'
+});
+
+connection.connect();
+
 /*
  * You will need to reuse the same paths many times over in the course of this sprint.
  * Consider using the `paths` object below to store frequently used file paths. This way,
@@ -27,61 +37,52 @@ exports.initialize = function(pathsObj){
 
 var dbPath = path.join(__dirname, '../archives/sites.txt');
 
-exports.readListOfUrls = function(callback){
-  // open file, get entire list, invoke callback
-  fs.readFile(dbPath, function (err, data) {
-    if (err) throw err;
-    var sites = data.toString().split('\n').slice(0, -1);
-    callback(sites);
-  });
-};
-
 exports.isUrlInList = function(url, callback){
-  exports.readListOfUrls(function(sites) {
-    callback(sites.indexOf(url) > -1);
+  var query = 'SELECT url FROM archive WHERE url = ' + connection.escape(url);
+  connection.query(query, function(err, exists) {
+    callback(exists.length === 1);
   });
-  // call readListOfUrls #=>
-    // check if url is in list
-    // callback(true/ false)
 };
 
 exports.addUrlToList = function(url){
+  // check if in list
+    // no: INSERT INTO archive (url) VALUES ("' + url + '");
   exports.isUrlInList(url, function(exists){
     if (!exists) {
-      fs.appendFile(dbPath, url + '\n');
+      connection.query('INSERT INTO archive (url) VALUES (' + connection.escape(url) + ')');
     }
   });
-
-
-  // check if isUrlInList #=>
-    // no: append url to list
 };
 
 exports.isURLArchived = function(url, callback){
-  fs.exists(path.join(__dirname, '..', '/archives/sites/', url), callback);
-  // check if file exists #=> callback(true/ calse)
+  var query = 'SELECT html FROM archive WHERE url = ' + connection.escape(url);
+  connection.query(query, function(err, rows) {
+    var exists = rows[0];
+    if (exists && exists.html) {
+      callback(true);
+    } else {
+      callback(false);
+    }
+  });
 };
 
 exports.downloadUrls = function(){
-  exports.readListOfUrls(function(sites) {
-    _.each(sites, function (site) {
-      exports.isURLArchived(site, function(exists) {
-        if (!exists) {
-          exports.downloadUrl(site);
-        }
-      });
+  connection.query('SELECT url FROM archive WHERE html IS NULL', function (err, rows) {
+    _.each(rows, function (row) {
+      exports.downloadUrl(row.url);
     });
   });
-  // readListOfUrls
-    // check if url is archived
-      // no: download Url
 };
 
 exports.downloadUrl = function (url) {
-  var siteFile = fs.createWriteStream(path.join(__dirname, '..', '/archives/sites/', url));
-  request('http://' + url)
-    .pipe(siteFile);
+  request('http://' + url, function (err, resp, html) {
+    connection.query('UPDATE archive SET html = ' + connection.escape(html) + ' WHERE url = ' + connection.escape(url));
+  });
+};
 
-  // request
-    // saves as ??
+exports.getHTML = function (url, callback) {
+  connection.query('SELECT html FROM archive WHERE url = ' + connection.escape(url), function (err, rows) {
+    if (err) throw err;
+    callback(rows[0].html);
+  });
 };

@@ -23,8 +23,9 @@ exports.serveAssets = function(res, asset) {
       //serve archived web site
       headers['Content-Type'] = mimeTypes['.html'];
       res.writeHead(200, headers);
-      var readStream = fs.createReadStream(path.join(__dirname, '../archives/sites', assetUrl));
-      readStream.pipe(res);
+      archive.getHTML(assetUrl, function (html) {
+        res.end(html);
+      });
     } else {
       asset = path.join(__dirname, '/public', asset);
       fs.exists(asset, function (exists) {
@@ -54,7 +55,6 @@ exports.acceptPost = function(req, res) {
         res.setHeader('location', 'http://127.0.0.1:8080/' + url);
         res.writeHead(302, headers);
         res.end();
-        // exports.serveAssets(res, path.resolve(__dirname, '..', '/archives/sites/', url), true);
       } else {
         archive.addUrlToList(url);
         exports.serveAssets(res, 'loading.html');
