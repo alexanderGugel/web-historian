@@ -23,7 +23,7 @@ beforeEach(function(){
 
 describe("Node Server Request Listener Function", function() {
 
-  it("Should answer GET requests for /", function(done) {
+  xit("Should answer GET requests for /", function(done) {
     var req = new stubs.Request("/", "GET");
 
     handler.handleRequest(req, res);

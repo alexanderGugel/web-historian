@@ -1,1 +1,12 @@
 www.google.com
+www.cnn.com
+www.example.com
+www.reddit.com
+www.stackoverflow.com
+www.nodejs.com
+www.meteor.com
+mes=+reddit.com%2Bmildlyinteresting%2BEarthPorn%2Bvideos%2Btodayilearned%2Bgadgets%2Bbooks%2BMusic%2BShowerthoughts%2BTwoXChromosomes%2BInternetIsBeautiful%2Bfunny%2BOldSchoolCool%2Bmovies%2BIAmA%2BDocumentaries%2Bsports%2Bworldcup%2Bworldnews%2Bexplainlikeimfive%2Bgaming%2Bgifs%2Bfood%2Baskscience%2BFuturology%2BUpliftingNews%2Baww%2BLifeProTips%2BFitness%2Bnews%2Bphotoshopbattles%2Btelevision%2BWritingPrompts%2BArt%2BDIY%2Bscience%2Bdataisbeautiful%2Bpersonalfinance%2Bcreepy%2Bpics%2Bnosleep%2BAskReddit%2Blistentothis%2BGetMotivated%2Bhistory&r=
+www.facebook.de
+www.mountaindew.com
+www.sqlcourse.com
+news.ycombinator.com
