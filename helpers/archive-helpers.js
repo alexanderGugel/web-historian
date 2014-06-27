@@ -34,18 +34,7 @@ exports.initialize = function(pathsObj){
 };
 
 var queryFunc = Q.nbind(connection.query, connection);
-var requestPromise = function(url) {
-  var deferred = Q.defer();
-  request(url, function(err, res, html) {
-    if (err) {
-      deferred.reject(err);
-    } else {
-      deferred.resolve(html);
-    }
-  });
-  return deferred.promise;
-};
-
+var requestPromise = Q.denodeify(request);
 
 // The following function names are provided to you to suggest how you might
 // modularize your code. Keep it clean!
@@ -120,18 +109,16 @@ exports.isURLArchived = function(url){
 };
 
 exports.downloadUrls = function(){
-  var deferred = Q.defer();
-
-  queryFunc('SELECT url FROM archive WHERE html IS NULL', function (err, rows) {
-    _.each(rows, function (row) {
-      exports.downloadUrl(row.url)
-        .catch(function(error) {
-          deferred.reject(error);
-        });
+  queryFunc('SELECT url FROM archive WHERE html IS NULL').then(function (rows) {
+    console.log('downloadUrls');
+    console.log(rows);
+    _.each(rows[0], function (row) {
+      exports.downloadUrl(row.url);
     });
+  }).catch(function (err) {
+    console.log(err)
   });
 
-  return deferred.promise;
 
 };
 
@@ -139,8 +126,13 @@ exports.downloadUrls = function(){
 exports.downloadUrl = function (url) {
   var deferred = Q.defer();
 
+  console.log('download ' + url);
+
   requestPromise('http://' + url)
-    .then(function (html) {
+    .then(function (result) {
+      console.log(result);
+      var html = result[1];
+      console.log(html);
       queryFunc('UPDATE archive SET html = ' + connection.escape(html) + ' WHERE url = ' + connection.escape(url))
         .catch(function(error) {
           deferred.reject(error);
