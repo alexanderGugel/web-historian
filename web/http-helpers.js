@@ -1,6 +1,8 @@
 var path = require('path');
 var fs = require('fs');
 var archive = require('../helpers/archive-helpers');
+var Q = require('q');
+
 
 exports.headers = headers = {
   "access-control-allow-origin": "*",
@@ -18,18 +20,24 @@ var mimeTypes = {
 exports.serveAssets = function(res, asset) {
   //check if file exists
   var assetUrl = asset.split('').slice(1).join('');
-  archive.isURLArchived(assetUrl, function (archived) {
+
+  console.log(assetUrl, 'Archived?')
+  archive.isURLArchived(assetUrl).then(function (archived) {
     if (archived) {
+      console.log('IT is archived and we will attempt to serve it');
       //serve archived web site
       headers['Content-Type'] = mimeTypes['.html'];
       res.writeHead(200, headers);
-      archive.getHTML(assetUrl, function (html) {
+      archive.getHTML(assetUrl).then(function (html) {
         res.end(html);
       });
     } else {
+      console.log('not archived')
       asset = path.join(__dirname, '/public', asset);
       fs.exists(asset, function (exists) {
+        console.log('Exists?')
         if (exists) {
+          console.log('Exists!!!')
           headers['Content-Type'] = mimeTypes[asset.split('.').reverse()[0]];
           res.writeHead(200, headers);
           var readStream = fs.createReadStream(asset);
@@ -50,12 +58,16 @@ exports.acceptPost = function(req, res) {
   });
   req.on('end', function(){
     var url = data.slice(4);
-    archive.isURLArchived(url, function (archived) {
+    console.log("post ", url, ", is it archived?");
+    archive.isURLArchived(url).then(function (archived) {
       if (archived) {
+        console.log(url, " is archived");
         res.setHeader('location', 'http://127.0.0.1:8080/' + url);
         res.writeHead(302, headers);
         res.end();
       } else {
+        console.log(url, " is not archived");
+
         archive.addUrlToList(url);
         exports.serveAssets(res, 'loading.html');
       }
