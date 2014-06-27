@@ -57,16 +57,9 @@ exports.isUrlInList = function(url){
   });
 
   return deferred.promise;
-
-  // connection.query(query, function(err, exists) {
-  //   callback(exists.length === 1);
-  // });
 };
 
 exports.addUrlToList = function(url){
-  // check if in list
-    // no: INSERT INTO archive (url) VALUES ("' + url + '");
-
   var deferred = Q.defer();
 
   exports.isUrlInList(url).then(function (exists) {
@@ -81,12 +74,6 @@ exports.addUrlToList = function(url){
   });
 
   return deferred.promise;
-
-  // exports.isUrlInList(url, function(exists){
-  //   if (!exists) {
-  //     connection.query('INSERT INTO archive (url) VALUES (' + connection.escape(url) + ')');
-  //   }
-  // });
 };
 
 exports.isURLArchived = function(url){
@@ -95,7 +82,6 @@ exports.isURLArchived = function(url){
   var query = 'SELECT html FROM archive WHERE url = ' + connection.escape(url);
   queryFunc(query).then(function(rows) {
     var exists = rows[0][0];
-    // console.log((exists && exists.html));
     if (exists && exists.html) {
       deferred.resolve(true);
     } else {
@@ -110,36 +96,27 @@ exports.isURLArchived = function(url){
 
 exports.downloadUrls = function(){
   queryFunc('SELECT url FROM archive WHERE html IS NULL').then(function (rows) {
-    console.log('downloadUrls');
-    console.log(rows);
     _.each(rows[0], function (row) {
       exports.downloadUrl(row.url);
     });
   }).catch(function (err) {
-    console.log(err)
+    console.log(err);
   });
-
-
 };
 
 
 exports.downloadUrl = function (url) {
   var deferred = Q.defer();
 
-  console.log('download ' + url);
-
   requestPromise('http://' + url)
     .then(function (result) {
-      console.log(result);
       var html = result[1];
-      console.log(html);
       queryFunc('UPDATE archive SET html = ' + connection.escape(html) + ' WHERE url = ' + connection.escape(url))
         .catch(function(error) {
           deferred.reject(error);
         });
     });
   return deferred.promise;
-
 };
 
 exports.getHTML = function (url) {
