@@ -4,6 +4,8 @@ var _ = require('underscore');
 var request = require('request');
 var mysql = require('mysql');
 var Q = require('q');
+var http = require('http');
+
 
 var connection = mysql.createConnection({
   host: 'localhost',
@@ -34,7 +36,21 @@ exports.initialize = function(pathsObj){
 };
 
 var queryFunc = Q.nbind(connection.query, connection);
-var requestPromise = Q.denodeify(request);
+
+var requestPromise = function(url) {
+  var deferred = Q.defer();
+  http.get(url, function(res) {
+    var html = '';
+    res.on('data', function (chunk) {
+        html += chunk;
+    });
+    res.on('end', function () {
+      deferred.resolve(html);
+    });
+  });
+
+  return deferred.promise;
+};
 
 // The following function names are provided to you to suggest how you might
 // modularize your code. Keep it clean!
@@ -108,14 +124,15 @@ exports.downloadUrls = function(){
 exports.downloadUrl = function (url) {
   var deferred = Q.defer();
 
-  requestPromise('http://' + url)
-    .then(function (result) {
-      var html = result[1];
-      queryFunc('UPDATE archive SET html = ' + connection.escape(html) + ' WHERE url = ' + connection.escape(url))
-        .catch(function(error) {
-          deferred.reject(error);
-        });
-    });
+  requestPromise('http://' + url).then(function (html) {
+    queryFunc('UPDATE archive SET html = ' + connection.escape(html) + ' WHERE url = ' + connection.escape(url))
+      .then(function () {
+        deferred.resolve();
+      })
+      .catch(function(error) {
+        deferred.reject(error);
+      });
+  });
   return deferred.promise;
 };
 
